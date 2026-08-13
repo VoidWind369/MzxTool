@@ -28,7 +28,7 @@ local bloodlust = {
     lastPlayTime = 0,
 }
 
-function VoidFrame:GetGroupBuffs()
+function MzxToolFrame:GetGroupBuffs()
     local timestamp, subevent, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destRaidFlags =
         CombatLogGetCurrentEventInfo()
     print(subevent, hideCaster, sourceGUID, sourceName)
@@ -45,7 +45,7 @@ function VoidFrame:GetGroupBuffs()
 end
 
 ---# 监控嗜血buff
-function VoidFrame:GetBloodlust(updateInfo)
+function MzxToolFrame:GetBloodlust(updateInfo)
     local foundBuff, buffName, spellIdFound = false, "", 0
 
     C_Timer.After(0.5, function()
@@ -84,13 +84,13 @@ function VoidFrame:GetBloodlust(updateInfo)
 end
 
 ---# 监控嗜血buff
-function VoidFrame:CheckBloodlust()
+function MzxToolFrame:CheckBloodlust()
     local foundBuff, buffName, spellIdFound, hasteState = false, "", 0, 0
 
     -- local haste = GetHaste()
-    -- if haste - VoidModCharacterDB.haste >= 30 then
+    -- if haste - MzxToolCharacterDB.haste >= 30 then
     --     hasteState = 1
-    -- elseif VoidModCharacterDB.haste - haste >= 30 then
+    -- elseif MzxToolCharacterDB.haste - haste >= 30 then
     --     hasteState = -1
     -- else
     --     hasteState = 0
@@ -119,7 +119,7 @@ function VoidFrame:CheckBloodlust()
     end)
 end
 
-function VoidFrame:OnBloodlustGained(buffName, spellId, ogg)
+function MzxToolFrame:OnBloodlustGained(buffName, spellId, ogg)
     local currentTime = GetTime()
 
     -- 防止重复播放（40秒内）
@@ -141,7 +141,7 @@ end
 
 ---# 播放外部语音文件
 ---@param ogg table
-function VoidFrame:PlayBloodlustVoice(ogg)
+function MzxToolFrame:PlayBloodlustVoice(ogg)
     if PlaySoundFile then
         if ogg == "ogg" then
             PlaySoundFile(bloodlust.voice_file, "Master")
@@ -154,7 +154,7 @@ function VoidFrame:PlayBloodlustVoice(ogg)
     end
 end
 
-function VoidFrame:ShowSimpleAlert(buffName)
+function MzxToolFrame:ShowSimpleAlert(buffName)
     -- 屏幕中央错误提示
     UIErrorsFrame:AddMessage("※ " .. buffName .. "！", 1.0, 1.0, 0.0, 1.0)
 
@@ -182,7 +182,7 @@ end
 ---# 检测嗜血Buff
 ---* 任意职业测试时
 ---* 需有嗜血职业组队
-function VoidFrame:DebugBuffs()
+function MzxToolFrame:DebugBuffs()
     DEFAULT_CHAT_FRAME:AddMessage("|cFFFFFF00=== 嗜血Buff检测 ===|r")
     for bloodlustId, bloodlustName in pairs(bloodlust.bloodlust_spell_ids) do
         local auraData = C_UnitAuras.GetUnitAuraBySpellID("player", bloodlustId)
@@ -201,7 +201,7 @@ end
 
 ---# 检测萨满三种元素护盾
 ---* 使用萨满作为测试职业时
-function VoidFrame:DebugEleBuff()
+function MzxToolFrame:DebugEleBuff()
     DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00护盾Buff检测|r")
     for spellId, spellName in pairs(bloodlust.d_spell_ids) do
         local auraData = C_UnitAuras.GetUnitAuraBySpellID("player", spellId)
@@ -216,7 +216,7 @@ end
 
 ---# 嗜血测试
 ---@param ogg table
-function VoidFrame:TestAlert(ogg)
+function MzxToolFrame:TestAlert(ogg)
     DEFAULT_CHAT_FRAME:AddMessage("|cFFFFFF00测试嗜血提示...|r")
     self:OnBloodlustGained("嗜血测试", 2825, ogg)
 end

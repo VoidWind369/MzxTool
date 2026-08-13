@@ -22,8 +22,8 @@ local totemWeapon = {
     }
 }
 
-function VoidFrame:CreateDotProgress()
-    VoidModCharacterDB.point.totemWeapon = VoidModCharacterDB.point.totemWeapon or {
+function MzxToolFrame:CreateDotProgress()
+    MzxToolCharacterDB.point.totemWeapon = MzxToolCharacterDB.point.totemWeapon or {
         p = totemWeapon.up.p,
         x = totemWeapon.up.x,
         y = totemWeapon.up.y
@@ -31,9 +31,9 @@ function VoidFrame:CreateDotProgress()
 
     -- 主框架
     self.dotFrame = CreateFrame("Frame", "TotemWeapon", UIParent, "BackdropTemplate")
-    self.dotFrame:SetPoint(VoidModCharacterDB.point.totemWeapon.p,
-        VoidModCharacterDB.point.totemWeapon.x,
-        VoidModCharacterDB.point.totemWeapon.y)
+    self.dotFrame:SetPoint(MzxToolCharacterDB.point.totemWeapon.p,
+        MzxToolCharacterDB.point.totemWeapon.x,
+        MzxToolCharacterDB.point.totemWeapon.y)
     WhiteTransparentFrame(self.dotFrame, totemWeapon)
 
     -- 创建10个小圆点
@@ -55,11 +55,11 @@ function VoidFrame:CreateDotProgress()
     end
 
     MovableDisplay(self.dotFrame)
-    MovableFrameStop(self.dotFrame, VoidModCharacterDB.point.totemWeapon, totemWeapon.up)
+    MovableFrameStop(self.dotFrame, MzxToolCharacterDB.point.totemWeapon, totemWeapon.up)
 end
 
 -- 设定狂风怒号颜色
-function VoidFrame:UpdateDotFrameProgress(hasGaleWindsData)
+function MzxToolFrame:UpdateDotFrameProgress(hasGaleWindsData)
     if hasGaleWindsData then
         self.dotFrame:SetBackdropColor(0, 0.4, 1, 0.55)
         self.dotFrame:SetBackdropBorderColor(0, 0.1, 0.4, 0.8)
@@ -70,7 +70,7 @@ function VoidFrame:UpdateDotFrameProgress(hasGaleWindsData)
 end
 
 -- 设定漩涡武器层数颜色
-function VoidFrame:UpdateDotProgress(stacks)
+function MzxToolFrame:UpdateDotProgress(stacks)
     local alpha = 1
     local topColor, bottomColor = self:GetGradientColorsSM(stacks, alpha)
     for i = 1, totemWeapon.max_stacks do
@@ -97,7 +97,7 @@ function VoidFrame:UpdateDotProgress(stacks)
     end
 end
 
-function VoidFrame:GetGradientColorsSM(stacks, alpha)
+function MzxToolFrame:GetGradientColorsSM(stacks, alpha)
     -- 饱满的金属渐变色
     if stacks <= 5 then
         -- 蓝色金属
@@ -112,7 +112,7 @@ function VoidFrame:GetGradientColorsSM(stacks, alpha)
     end
 end
 
-function VoidFrame:GetGradientColors(stacks, alpha)
+function MzxToolFrame:GetGradientColors(stacks, alpha)
     if stacks <= 5 then
         -- 蓝色金属
         return CreateColor(0.8, 0.9, 1.0, alpha)
@@ -126,7 +126,7 @@ function VoidFrame:GetGradientColors(stacks, alpha)
 end
 
 -- 增强萨buff监控进程
-function VoidFrame:UpdateTotemWeaponStacks()
+function MzxToolFrame:UpdateTotemWeaponStacks()
     local totemWeaponData = C_UnitAuras.GetUnitAuraBySpellID("player", totemWeapon.spell_id)
     local galeWindsData = C_UnitAuras.GetUnitAuraBySpellID("player", totemWeapon.galeWinds_spell_id)
 
@@ -146,7 +146,7 @@ function VoidFrame:UpdateTotemWeaponStacks()
     -- end
 end
 
-function VoidFrame:TestDisplay()
+function MzxToolFrame:TestDisplay()
     -- 测试显示不同层数
     DEFAULT_CHAT_FRAME:AddMessage("|cFFFFFF00测试小圆点进度...|r")
 

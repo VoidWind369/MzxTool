@@ -11,7 +11,7 @@ local point = {
     }
 }
 
-function VoidFrame:Void_PlayerInfo()
+function MzxToolFrame:Void_PlayerInfo()
     local specID, name, description, icon, role, primaryStat = GetSpecializationInfo(GetSpecialization())
     -- 主属性
     local attribute = UnitStat("player", primaryStat or 3)
@@ -47,10 +47,7 @@ function VoidFrame:Void_PlayerInfo()
     }
     local isGliding, canGlide, forwardSpeed = C_PlayerInfo.GetGlidingInfo()
     local currentSpeed = isGliding and forwardSpeed or GetUnitSpeed("player")
-    -- local speedPercent = InCombatLockdown() and AbbreviateNumbers(currentSpeed, SPEED_FORMAT_OPTIONS) or
-    --     string.format("%.2f%%", Round(currentSpeed / BASE_MOVEMENT_SPEED * 100))
     local speedPercent = AbbreviateNumbers(currentSpeed, SPEED_FORMAT_OPTIONS)
-    --local power = UnitPower("player", Enum.PowerType.Mana)
 
     -- 副属性
     local crit, crit_value = GetCritChance(), GetCombatRating(CR_CRIT_MELEE)
@@ -59,47 +56,29 @@ function VoidFrame:Void_PlayerInfo()
     local versatility, versatility_value = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE),
         GetCombatRating(CR_VERSATILITY_DAMAGE_DONE)
 
-    VoidModCharacterDB.haste = haste
+    MzxToolCharacterDB.haste = haste
 
-    -- 吸血 (Leech)
-    local leech, leech_value = GetLifesteal(), GetCombatRating(CR_LIFESTEAL)
-    -- 闪避 (Avoidance)
+    local leech, leech_value = GetLifesteal(), GetCombatRating(CR_LIFESTEAL)             -- 吸血 (Leech)
     local avoidance, avoidance_value = GetCombatRatingBonus(CR_AVOIDANCE),
-        GetCombatRating(CR_AVOIDANCE)
-    -- 加速 (Speed)
-    local speed, speed_value = GetCombatRatingBonus(CR_SPEED), GetCombatRating(CR_SPEED)
-
-    -- local a, b, c = GetCombatRating(CR_HASTE_MELEE), GetCombatRating(CR_HASTE_RANGED),
-    --     GetCombatRating(CR_HASTE_SPELL)
-    -- print("近战" .. a .. " 远程" .. b .. " 法术" .. c)
+        GetCombatRating(CR_AVOIDANCE)                                                    -- 闪避 (Avoidance)
+    local speed, speed_value = GetCombatRatingBonus(CR_SPEED), GetCombatRating(CR_SPEED) -- 加速 (Speed)
 
     local first_table = {
-        name = {
-            "|cFFFFFF00装等|r",
-            "|cFFFFFF00生命|r",
-            "|cFFFFFF00" .. primaryStatName .. "|r",
-            "|cFFFFFF00护甲|r",
-            "|cFFFFFF00移速|r",
-        },
-        value =
-            itemLevel .. "\n" ..
-            health .. "\n" ..
-            attribute .. "\n" ..
-            armor .. "\n" ..
-            speedPercent,
-
+        { name = "|cFFFFFF00装等|r", value = itemLevel },
+        { name = "|cFFFFFF00生命|r", value = health },
+        { name = "|cFFFFFF00" .. primaryStatName .. "|r", value = attribute },
+        { name = "|cFFFFFF00护甲|r", value = armor },
+        { name = "|cFFFFFF00移速|r", value = speedPercent },
     }
 
     local last_table = {
-        name = { "|cFF00FF00暴击|r", "|cFF00FF00急速|r", "|cFF00FF00精通|r", "|cFF00FF00全能|r", "|cFF228B22吸血|r", "|cFF228B22闪避|r", "|cFF228B22加速|r" },
-        value =
-            string.format("%.2f%%", crit) .. "  |cFFFF8C00" .. crit_value .. "|r\n" ..
-            string.format("%.2f%%", haste) .. "  |cFFFF8C00" .. haste_value .. "|r\n" ..
-            string.format("%.2f%%", mastery) .. "  |cFFFF8C00" .. mastery_value .. "|r\n" ..
-            string.format("%.2f%%", versatility) .. "  |cFFFF8C00" .. versatility_value .. "|r\n" ..
-            string.format("%.2f%%", leech) .. "  |cFFFF8C00" .. leech_value .. "|r\n" ..
-            string.format("%.2f%%", avoidance) .. "  |cFFFF8C00" .. avoidance_value .. "|r\n" ..
-            string.format("%.2f%%", speed) .. "  |cFFFF8C00" .. speed_value .. "|r",
+        { name = "|cFF00FF00暴击|r", value = string.format("%.2f%%", crit) .. "  |cFFFF8C00" .. crit_value .. "|r" },
+        { name = "|cFF00FF00急速|r", value = string.format("%.2f%%", haste) .. "  |cFFFF8C00" .. haste_value .. "|r" },
+        { name = "|cFF00FF00精通|r", value = string.format("%.2f%%", mastery) .. "  |cFFFF8C00" .. mastery_value .. "|r" },
+        { name = "|cFF00FF00全能|r", value = string.format("%.2f%%", versatility) .. "  |cFFFF8C00" .. versatility_value .. "|r" },
+        { name = "|cFF228B22吸血|r", value = string.format("%.2f%%", leech) .. "  |cFFFF8C00" .. leech_value .. "|r" },
+        { name = "|cFF228B22闪避|r", value = string.format("%.2f%%", avoidance) .. "  |cFFFF8C00" .. avoidance_value .. "|r" },
+        { name = "|cFF228B22加速|r", value = string.format("%.2f%%", speed) .. "  |cFFFF8C00" .. speed_value .. "|r" }
     }
     return first_table, last_table
 end
@@ -112,77 +91,80 @@ function PrintCombatRating()
 end
 
 --- # 创建主属性框体
-function VoidFrame:Void_CreatePlayerInfoDisplay_UP(first)
-    VoidModCharacterDB.point.player_up = VoidModCharacterDB.point.player_up or {
+function MzxToolFrame:Void_CreatePlayerInfoDisplay_UP(first)
+    MzxToolCharacterDB.point.player_up = MzxToolCharacterDB.point.player_up or {
         p = point.player_up.p,
         x = point.player_up.x,
         y = point.player_up.y
     }
 
     self.voidPlayerInfo_UP = CreateFrame("Frame", "PlayerInfo_UP", UIParent, "BackdropTemplate")
-    self.voidPlayerInfo_UP:SetSize(170, 110)
-    self.voidPlayerInfo_UP:SetPoint(VoidModCharacterDB.point.player_up.p, VoidModCharacterDB.point.player_up.x,
-        VoidModCharacterDB.point.player_up.y)
-    SetInfoFrameStyle(self.voidPlayerInfo_UP)
+    self.voidPlayerInfo_UP:SetSize(150, #first * 20 + 10)
+    self.voidPlayerInfo_UP:SetPoint(MzxToolCharacterDB.point.player_up.p, MzxToolCharacterDB.point.player_up.x,
+        MzxToolCharacterDB.point.player_up.y)
+    SetInfoFrameStyle(self.voidPlayerInfo_UP, true)
 
-    -- self.voidPlayerInfoText_UP = self.voidPlayerInfo_UP:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-
-    -- AddString(self.voidPlayerInfoText_UP, first)
-    self.voidPlayerInfoText_UP = {
-        self.voidPlayerInfo_UP:CreateFontString(nil, "OVERLAY", "GameTooltipText"),
-        self.voidPlayerInfo_UP:CreateFontString(nil, "OVERLAY", "GameTooltipText"),
-    }
-    AddStringLeft(self.voidPlayerInfoText_UP[1], table.concat(first.name, "\n"), 1.1)
-    AddStringRight(self.voidPlayerInfoText_UP[2], first.value, 1.1)
+    self.voidPlayerInfoText_UP = {}
+    for index, value in ipairs(first) do
+        self.voidPlayerInfoText_UP[index] = {
+            self.voidPlayerInfo_UP:CreateFontString(nil, "OVERLAY", "GameTooltipText"),
+            self.voidPlayerInfo_UP:CreateFontString(nil, "OVERLAY", "GameTooltipText"),
+        }
+        AddStringLeft(self.voidPlayerInfoText_UP[index][1], value.name, 1.1, 6, (1 - index) * 20 + (#first - 1) * 10)
+        AddStringRight(self.voidPlayerInfoText_UP[index][2], value.value, 1.1, -5, (1 - index) * 20 + (#first - 1) * 10)
+    end
 end
 
 --- # 创建副属性框体
-function VoidFrame:Void_CreatePlayerInfoDisplay_Down(info)
-    VoidModCharacterDB.point.player_down = VoidModCharacterDB.point.player_down or {
+function MzxToolFrame:Void_CreatePlayerInfoDisplay_Down(last)
+    MzxToolCharacterDB.point.player_down = MzxToolCharacterDB.point.player_down or {
         p = point.player_down.p,
         x = point.player_down.x,
         y = point.player_down.y
     }
     self.voidPlayerInfo_DOWN = CreateFrame("Frame", "PlayerInfo_DOWN", UIParent, "BackdropTemplate")
-    self.voidPlayerInfo_DOWN:SetSize(170, 135)
-    self.voidPlayerInfo_DOWN:SetPoint(VoidModCharacterDB.point.player_down.p, VoidModCharacterDB.point.player_down.x,
-        VoidModCharacterDB.point.player_down.y)
-    SetInfoFrameStyle(self.voidPlayerInfo_DOWN)
+    self.voidPlayerInfo_DOWN:SetSize(150, #last * 20 + 10)
+    self.voidPlayerInfo_DOWN:SetPoint(MzxToolCharacterDB.point.player_down.p, MzxToolCharacterDB.point.player_down.x,
+        MzxToolCharacterDB.point.player_down.y)
+    SetInfoFrameStyle(self.voidPlayerInfo_DOWN, true)
 
-    -- self.voidPlayerInfoText_DOWN = self.voidPlayerInfo_DOWN:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-
-    -- AddString(self.voidPlayerInfoText_DOWN, info)
-    self.voidPlayerInfoText_DOWN = {
-        self.voidPlayerInfo_DOWN:CreateFontString(nil, "OVERLAY", "GameTooltipText"),
-        self.voidPlayerInfo_DOWN:CreateFontString(nil, "OVERLAY", "GameTooltipText"),
-    }
-
-    AddStringLeft(self.voidPlayerInfoText_DOWN[1], table.concat(info.name, "\n"))
-    AddStringRight(self.voidPlayerInfoText_DOWN[2], info.value)
+    self.voidPlayerInfoText_DOWN = {}
+    for index, value in ipairs(last) do
+        self.voidPlayerInfoText_DOWN[index] = {
+            self.voidPlayerInfo_DOWN:CreateFontString(nil, "OVERLAY", "GameTooltipText"),
+            self.voidPlayerInfo_DOWN:CreateFontString(nil, "OVERLAY", "GameTooltipText"),
+        }
+        AddStringLeft(self.voidPlayerInfoText_DOWN[index][1], value.name, nil, 6, (1 - index) * 20 + (#last - 1) * 10)
+        AddStringRight(self.voidPlayerInfoText_DOWN[index][2], value.value, nil, -5, (1 - index) * 20 + (#last - 1) * 10)
+    end
 end
 
 --- # 创建玩家信息框体
-function VoidFrame:Void_CreatePlayerInfoDisplay()
-    VoidModCharacterDB.point = VoidModCharacterDB.point or point
+function MzxToolFrame:Void_CreatePlayerInfoDisplay()
+    MzxToolCharacterDB.point = MzxToolCharacterDB.point or point
 
-    local first, info = VoidFrame:Void_PlayerInfo()
+    local first, last = MzxToolFrame:Void_PlayerInfo()
     self:Void_CreatePlayerInfoDisplay_UP(first)
-    self:Void_CreatePlayerInfoDisplay_Down(info)
+    self:Void_CreatePlayerInfoDisplay_Down(last)
 
     MovableDisplay(self.voidPlayerInfo_UP)
     MovableDisplay(self.voidPlayerInfo_DOWN)
 
-    MovableFrameStop(self.voidPlayerInfo_UP, VoidModCharacterDB.point.player_up, point.player_up)
-    MovableFrameStop(self.voidPlayerInfo_DOWN, VoidModCharacterDB.point.player_down, point.player_down)
+    MovableFrameStop(self.voidPlayerInfo_UP, MzxToolCharacterDB.point.player_up, point.player_up)
+    MovableFrameStop(self.voidPlayerInfo_DOWN, MzxToolCharacterDB.point.player_down, point.player_down)
 end
 
 --- # 刷新玩家信息框体
-function VoidFrame:Void_UpdatePlayerInfoDisplay()
+function MzxToolFrame:Void_UpdatePlayerInfoDisplay()
     if self.voidPlayerInfo_UP and self.voidPlayerInfo_DOWN then
-        local first, info = VoidFrame:Void_PlayerInfo()
-        self.voidPlayerInfoText_UP[1]:SetText(table.concat(first.name, "\n"))
-        self.voidPlayerInfoText_UP[2]:SetText(first.value)
-        self.voidPlayerInfoText_DOWN[1]:SetText(table.concat(info.name, "\n"))
-        self.voidPlayerInfoText_DOWN[2]:SetText(info.value)
+        local first, last = MzxToolFrame:Void_PlayerInfo()
+        for index, value in ipairs(first) do
+            self.voidPlayerInfoText_UP[index][1]:SetText(value.name)
+            self.voidPlayerInfoText_UP[index][2]:SetText(value.value)
+        end
+        for index, value in ipairs(last) do
+            self.voidPlayerInfoText_DOWN[index][1]:SetText(value.name)
+            self.voidPlayerInfoText_DOWN[index][2]:SetText(value.value)
+        end
     end
 end

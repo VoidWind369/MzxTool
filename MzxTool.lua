@@ -1,23 +1,27 @@
 -- 创建主框架
-VoidFrame = CreateFrame("Frame", "VoidModFrame", UIParent)
-VoidFrame:RegisterEvent("PLAYER_LOGIN")         -- 用户登录
-VoidFrame:RegisterEvent("UNIT_AURA")            -- 获得或消失的增益、减益、状态或物品加成
-VoidFrame:RegisterEvent("CHAT_MSG_WHISPER")     -- 收到其他玩家的低语
-VoidFrame:RegisterEvent("PARTY_INVITE_REQUEST") -- 排本邀请
-VoidFrame:RegisterEvent("UNIT_COMBAT")          -- 当 NPC 或玩家参与战斗并受到伤害时触发
-VoidFrame:RegisterEvent("LFG_QUEUE_STATUS_UPDATE")
-VoidFrame:RegisterEvent("GROUP_INVITE_CONFIRMATION")
-VoidFrame:RegisterEvent("LFG_ROLE_CHECK_SHOW")
--- VoidFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED") -- 战斗日志
+MzxToolFrame = CreateFrame("Frame", "VoidModFrame", UIParent)
+MzxToolFrame:RegisterEvent("PLAYER_LOGIN")         -- 用户登录
+MzxToolFrame:RegisterEvent("UNIT_AURA")            -- 获得或消失的增益、减益、状态或物品加成
+MzxToolFrame:RegisterEvent("CHAT_MSG_WHISPER")     -- 收到其他玩家的低语
+MzxToolFrame:RegisterEvent("PARTY_INVITE_REQUEST") -- 排本邀请
+MzxToolFrame:RegisterEvent("UNIT_COMBAT")          -- 当 NPC 或玩家参与战斗并受到伤害时触发
+MzxToolFrame:RegisterEvent("LFG_QUEUE_STATUS_UPDATE")
+MzxToolFrame:RegisterEvent("GROUP_INVITE_CONFIRMATION")
+MzxToolFrame:RegisterEvent("LFG_ROLE_CHECK_SHOW")
+MzxToolFrame:RegisterEvent("LFG_PROPOSAL_SHOW")    -- 排到副本
+-- MzxToolFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED") -- 战斗日志
 
-VoidFrame:SetScript("OnEvent", function(self, event, ...)
+MzxToolFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
         self:Initialize()
     elseif event == "UNIT_AURA" then
         local unitTarget, updateInfo = ...
         if unitTarget == "player" then
-            -- self:GetBloodlust(updateInfo)
-            self:CheckBloodlust()
+            if MzxToolCharacterDB.status.BloodlustSimple == true then
+                -- self:GetBloodlust(updateInfo)
+                self:CheckBloodlust()
+            end
+
             -- 判断是否增强萨满
             if GetSpecializationInfo(GetSpecialization()) == 263 then
                 self.dotFrame:Show()
@@ -41,8 +45,19 @@ VoidFrame:SetScript("OnEvent", function(self, event, ...)
         self:Void_UpdatePlayerInfoDisplay()
     end
     if event == "LFG_ROLE_CHECK_SHOW" then
-        print("排本")
-        C_Timer.After(0.1, function() LFDRoleCheckPopupAcceptButton:Click() end)
+        print("排本选择职责")
+        C_Timer.After(0.5, function() LFDRoleCheckPopupAcceptButton:Click() end)
+    end
+    if event == "LFG_PROPOSAL_SHOW" then
+        print("排本匹配成功")
+        C_Timer.After(0.5, function()
+            if self.autoEnterButton then
+                print("匹配成功！准备自动进本...")
+                -- LFGTeleport(IsInLFGDungeon())
+                self.autoEnterButton:Click()
+                print("自动进入副本...")
+            end
+        end)
     end
     -- if event == "COMBAT_LOG_EVENT_UNFILTERED" then
     --     self:GetGroupBuffs()
@@ -50,17 +65,17 @@ VoidFrame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 C_Timer.NewTicker(.1, function()
-    VoidFrame:Void_UpdatePlayerInfoDisplay()
+    MzxToolFrame:Void_UpdatePlayerInfoDisplay()
 end)
 
--- VoidFrame:SetScript("OnUpdate", function(self, delta)
+-- MzxToolFrame:SetScript("OnUpdate", function(self, delta)
 --     self:Void_UpdatePlayerInfoDisplay()
 --     -- if InCombatLockdown() then
 --     --     GetTargetBuff()
 --     -- end
 -- end)
 
-function VoidFrame:Initialize()
+function MzxToolFrame:Initialize()
     -- 加载数据库
     InitDatabase()
 
@@ -70,14 +85,23 @@ function VoidFrame:Initialize()
     -- WOW客户端信息
     self:ClientInfo()
 
+    self:CreateAutoButton()
+
     -- 创建骨盾框架
-    -- self:CreateBoneShieldDotProgress()
+    if MzxToolCharacterDB.status.BoneShieldMonitor == true then
+        self:CreateBoneShieldDotProgress()
+    end
+
     -- 创建漩涡武器框架
-    self:CreateDotProgress()
+    if MzxToolCharacterDB.status.TotemWeaponMonitor == true then
+        self:CreateDotProgress()
+    end
 
 
     -- 创建属性显示框架
-    self:Void_CreatePlayerInfoDisplay()
+    if MzxToolCharacterDB.status.PlayerInfo == true then
+        self:Void_CreatePlayerInfoDisplay()
+    end
 
     -- 注册斜杠命令
     SLASH_VOID_MOD1 = "/void"
@@ -87,7 +111,7 @@ function VoidFrame:Initialize()
     DEFAULT_CHAT_FRAME:AddMessage("|cFFFF0000恶！龙！咆！哮！|r|cFF00FF00启动！|r")
 end
 
-function VoidFrame:HandleSlashCommand(msg)
+function MzxToolFrame:HandleSlashCommand(msg)
     local command = strlower(strtrim(msg))
 
     if command == "bls test" then
@@ -117,13 +141,13 @@ function VoidFrame:HandleSlashCommand(msg)
     end
 end
 
-function VoidFrame:ClientInfo()
+function MzxToolFrame:ClientInfo()
     local version, build, date, toc_version = GetBuildInfo()
     print("|cFF33937FVoidMod|r |cFF69CCF0Client|r |cFF00FF00Info:|r \n » Version: " ..
         version .. "\n » Build: " .. build .. "\n » Date: " .. date .. "\n » TocVersion: " .. toc_version)
 end
 
-function VoidFrame:PrintHelp()
+function MzxToolFrame:PrintHelp()
     DEFAULT_CHAT_FRAME:AddMessage("|cFFFFFF00恶龙咆哮:|r")
     DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00/void bls test|r - 测试提示效果")
     DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00/void bls debug|r - 显示当前所有buff和ID")

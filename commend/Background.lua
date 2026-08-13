@@ -1,3 +1,6 @@
+local texturePath = "Interface/Tooltips/UI-Tooltip-Background"
+local textureBorder = "Interface/Tooltips/UI-Tooltip-Border"
+
 -- 资源条框体
 function WhiteTransparentFrame(self, infos)
     local bar_width = (infos.dot_size + infos.dot_spacing) * infos.max_stacks
@@ -57,17 +60,21 @@ function WhiteTransparentDotTex(dotTex, infos)
 end
 
 --- # 框体通用属性
-function SetInfoFrameStyle(frame)
+function SetInfoFrameStyle(frame, no_border)
     frame:SetBackdrop({
-        bgFile = "interface/framegeneral/uiframemidnightbackground",
-        -- bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+        bgFile = texturePath,
+        edgeFile = textureBorder,
         edgeSize = 12,
         insets = { left = 6, right = 6, top = 6, bottom = 6 },
     })
-    -- frame:SetTexCoord(0.00048828125, 0.46826171875, 0.00048828125, 0.39501953125)
     frame:SetBackdropColor(0, 0, 0, 0.3)
     frame:SetBackdropBorderColor(0.2, 0.2, 0.2, 0.5)
+    if no_border then
+        frame:SetBackdrop({
+            bgFile = texturePath,
+        })
+    end
+    frame:SetBackdropColor(0, 0, 0, 0.3)
 end
 
 --- # 显示数字通用属性
@@ -143,5 +150,11 @@ function MinutesOrSeconds(seconds)
         return string.format("%.1fs", seconds / 1000)
     else
         return string.format("%.0fs", seconds / 1000)
+    end
+end
+
+function MzxDebug(...)
+    if MzxToolCharacterDB.status.Debug then
+        print(...)
     end
 end

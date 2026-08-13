@@ -1,4 +1,4 @@
-function VoidFrame:MessageStart(text, playerName, languageName, channelName)
+function MzxToolFrame:MessageStart(text, playerName, languageName, channelName)
     if not text then
         return
     end
@@ -23,7 +23,7 @@ function VoidFrame:MessageStart(text, playerName, languageName, channelName)
     end
 end
 
-function VoidFrame:PartyStart(name, isTank, isHealer, isDamage, isNativeRealm, allowMultipleRoles, inviterGUID,
+function MzxToolFrame:PartyStart(name, isTank, isHealer, isDamage, isNativeRealm, allowMultipleRoles, inviterGUID,
                               questSessionActive)
     -- AcceptGroup()
     -- StaticPopup_Hide("PARTY_INVITE")

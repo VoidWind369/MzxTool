@@ -16,7 +16,7 @@ local boneShield = {
     lastStacks = 0,
 }
 
-function VoidFrame:CreateBoneShieldDotProgress()
+function MzxToolFrame:CreateBoneShieldDotProgress()
     -- 主框架
     self.dotFrameDeathKnight = CreateFrame("Frame", "BoneShield", UIParent, "BackdropTemplate")
     WhiteTransparentFrame(self.dotFrameDeathKnight, boneShield)
@@ -43,7 +43,7 @@ function VoidFrame:CreateBoneShieldDotProgress()
     end
 end
 
-function VoidFrame:UpdateDeathKnightDotFrameProgress(hasGaleWindsData)
+function MzxToolFrame:UpdateDeathKnightDotFrameProgress(hasGaleWindsData)
     if hasGaleWindsData then
         self.dotFrameDeathKnight:SetBackdropColor(0, 0.4, 1, 0.55)
         self.dotFrameDeathKnight:SetBackdropBorderColor(0, 0.1, 0.4, 0.8)
@@ -54,7 +54,7 @@ function VoidFrame:UpdateDeathKnightDotFrameProgress(hasGaleWindsData)
 end
 
 -- 设定骨盾层数颜色
-function VoidFrame:UpdateDeathKnightDotProgress(stacks)
+function MzxToolFrame:UpdateDeathKnightDotProgress(stacks)
     local alpha = 1
     for i = 1, boneShield.max_stacks do
         local dot = self.boneShieldDots[i]
@@ -80,7 +80,7 @@ function VoidFrame:UpdateDeathKnightDotProgress(stacks)
     end
 end
 
-function VoidFrame:GetDeathKnightGradientColors(dotIndex, alpha)
+function MzxToolFrame:GetDeathKnightGradientColors(dotIndex, alpha)
     -- 饱满的金属渐变色
     if dotIndex <= 4 then
         -- 红色金属
@@ -97,7 +97,7 @@ function VoidFrame:GetDeathKnightGradientColors(dotIndex, alpha)
     end
 end
 
-function VoidFrame:UpdateDeathKnightBuff()
+function MzxToolFrame:UpdateDeathKnightBuff()
     local boneShieldData = C_UnitAuras.GetAuraDataBySlot("player", boneShield.spell_id)
     local ruinData = C_UnitAuras.GetUnitAuraBySpellID("player", boneShield.ruin_spell_id)
 

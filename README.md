@@ -1,2 +1,2 @@
-# Void Mod
+# MzxToolBox
 #### A World for Warcraft Mod

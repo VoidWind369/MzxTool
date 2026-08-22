@@ -2,11 +2,13 @@
 ## Title: |CFF8845ECM|r|CFFA037E9z|r|CFFA435E8x|r|CFFB32DE6T|r|CFFBC26E5o|r|CFFCB1EE3o|r|CFFDD14E0l|r|CFFEB0BDDB|r|CFFFB04DAo|r|CFFFF00D8x|r
 ## Notes: Mzx插件整合
 ## Author: Muzixi
-## Version: 1.0.4
+## Version: 1.0.5
 ## SavedVariables: MzxToolDB
 ## SavedVariablesPerCharacter: MzxToolCharacterDB
 ## IconTexture: Interface\AddOns\MzxTool\Moon.png
 ## X-Curse-Project-ID: 1498093
+
+embeds.xml
 
 MzxTool.lua
 MzxToolData.lua

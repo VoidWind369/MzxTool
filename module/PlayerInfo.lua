@@ -33,6 +33,27 @@ local function SafePercent(value)
     return string.format("%.2f%%", value)
 end
 
+---# 安全读取战斗等级常量：常量在部分版本可能未定义，此时回退为 0
+local function CR(index)
+    return type(index) == "number" and index or 0
+end
+
+local function SafeGetCombatRating(index)
+    index = CR(index)
+    if index == 0 then
+        return 0
+    end
+    return GetCombatRating(index) or 0
+end
+
+local function SafeGetCombatRatingBonus(index)
+    index = CR(index)
+    if index == 0 then
+        return 0
+    end
+    return GetCombatRatingBonus(index) or 0
+end
+
 function MzxToolFrame:Void_PlayerInfo()
     local specIndex = GetSpecialization()
     local specID, name, description, icon, role, primaryStat
@@ -81,17 +102,18 @@ function MzxToolFrame:Void_PlayerInfo()
     local currentSpeed = (isGliding and forwardSpeed) or GetUnitSpeed("player")
     local speedPercent = SafeStr(AbbreviateNumbers(currentSpeed, SPEED_FORMAT_OPTIONS))
 
-    -- 副属性
-    local crit, crit_value = GetCritChance(), GetCombatRating(CR_CRIT_MELEE)
-    local haste, haste_value = GetHaste(), GetCombatRating(CR_HASTE)
-    local mastery, mastery_value = GetMasteryEffect(), GetCombatRating(CR_MASTERY)
-    local versatility, versatility_value = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE),
-        GetCombatRating(CR_VERSATILITY_DAMAGE_DONE)
+    -- 副属性（12.x 已统一为 CR_HASTE_MELEE，CR_HASTE 不再存在）
+    local crit, crit_value = GetCritChance(), SafeGetCombatRating(CR_CRIT_MELEE)
+    local haste, haste_value = GetHaste(), SafeGetCombatRating(CR_HASTE_MELEE)
+    local mastery, mastery_value = GetMasteryEffect(), SafeGetCombatRating(CR_MASTERY)
+    local versatility = SafeGetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE)
+    local versatility_value = SafeGetCombatRating(CR_VERSATILITY_DAMAGE_DONE)
 
-    local leech, leech_value = GetLifesteal(), GetCombatRating(CR_LIFESTEAL)             -- 吸血 (Leech)
-    local avoidance, avoidance_value = GetCombatRatingBonus(CR_AVOIDANCE),
-        GetCombatRating(CR_AVOIDANCE)                                                    -- 闪避 (Avoidance)
-    local speed, speed_value = GetCombatRatingBonus(CR_SPEED), GetCombatRating(CR_SPEED) -- 加速 (Speed)
+    local leech, leech_value = GetLifesteal(), SafeGetCombatRating(CR_LIFESTEAL) -- 吸血 (Leech)
+    local avoidance = SafeGetCombatRatingBonus(CR_AVOIDANCE)                        -- 闪避 (Avoidance)
+    local avoidance_value = SafeGetCombatRating(CR_AVOIDANCE)
+    local speed = SafeGetCombatRatingBonus(CR_SPEED)                                -- 加速 (Speed)
+    local speed_value = SafeGetCombatRating(CR_SPEED)
 
     local first_table = {
         { name = "|cFFFFFF00装等|r", value = itemLevel },
@@ -122,8 +144,7 @@ end
 function PrintCombatRating()
     for i = 1, 32, 1 do
         if CombatRatingMetaData and CombatRatingMetaData[i] then
-            local bonus, value = GetCombatRatingBonus(i), GetCombatRating(i)
-            print(CombatRatingMetaData[i].label, i, bonus, value)
+            print(CombatRatingMetaData[i].label, i, SafeGetCombatRatingBonus(i), SafeGetCombatRating(i))
         end
     end
 end

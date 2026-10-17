@@ -1,3 +1,7 @@
+# v1.0.9
+- 修复 GetCombatRating(CR_HASTE) 报错（12.x 不存在该常量），改用 CR_HASTE_MELEE
+- 为所有战斗等级读取增加常量缺失兜底，避免版本差异导致插件报错
+
 # v1.0.8
 - 修复 /void 命令被 Ace3 覆盖导致的子命令全部失效
 - 修复 /mzx show|hide 写入错误键名导致配置被破坏

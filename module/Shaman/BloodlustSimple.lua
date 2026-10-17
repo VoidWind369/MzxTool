@@ -1,18 +1,19 @@
 local bloodlust = {
     bloodlust_spell_ids = {
-        [2825] = "|cFF0070DE嗜血 Bloodlust|r",
-        [32182] = "|cFF0070DE英勇 Heroism|r",
-        [80353] = "|cFF69CCF0时光扭曲 Time Warp|r",
-        [264667] = "|cFFABD473原始狂怒 Primal Rage|r",
-        [390386] = "|cFF33937F守护巨龙之怒 Fury of the Aspects|r",
-        [178207] = "|cFFC69B6D狂怒战鼓|r",
-        [230935] = "|cFFC69B6D高山战鼓|r",
-        [256740] = "|cFFC69B6D漩涡战鼓|r",
-        [308084] = "|cFFC69B6D尊主打击|r",
-        [354646] = "|cFFC69B6D戈姆毒气|r",
+        [2825] = "嗜血 Bloodlust",
+        [32182] = "英勇 Heroism",
+        [80353] = "时光扭曲 Time Warp",
+        [264667] = "原始狂怒 Primal Rage",
+        [390386] = "守护巨龙之怒 Fury of the Aspects",
     },
 
-    bloodlust_debuffs = { 57723, 57724, 80354, 95809, 160455, 207400, 264689, 390435 },
+    -- 真正表示「吃到嗜血类增益」的减益ID
+    bloodlust_debuffs = {
+        57723,  -- Exhaustion 疲劳
+        57724,  -- Sated 饱足
+        80354,  -- Temporal Displacement 时间位移
+        390435, -- Exhaustion Deserter 临阵脱逃（战场/评级）
+    },
 
     d_spell_ids = {
         [192106] = "闪电护盾",
@@ -20,99 +21,47 @@ local bloodlust = {
         [383648] = "大地护盾",
     },
 
-    -- 语音文件路径
-    voice_file = "Interface/AddOns/MzxMedia/void_voice.ogg",
-    yurin = "Interface/AddOns/MzxMedia/yurin.wav",
+    -- 语音文件路径（需随插件一同分发 media 目录）
+    voice_file = "Interface/AddOns/MzxTool/media/void_voice.ogg",
+    yurin = "Interface/AddOns/MzxTool/media/yurin.wav",
 
     hasBloodlust = false,
     lastPlayTime = 0,
+    pendingTimer = nil,
+    lastState = nil,
 }
 
-function MzxToolFrame:GetGroupBuffs()
-    local timestamp, subevent, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destRaidFlags =
-        CombatLogGetCurrentEventInfo()
-    print(subevent, hideCaster, sourceGUID, sourceName)
-    if subevent == "SPELL_SUMMON" and sourceGUID == UnitGUID("player") then
-        local spellId, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand =
-            select(12, CombatLogGetCurrentEventInfo())
-
-        if tContains(totem_dance.windfury_totem_spell_id, spellId) then
-            -- 更新时间
-            totem_dance.totem_end_time = GetTime() + 10.000
+---# 查找玩家身上任一嗜血类减益
+function bloodlust:FindAura()
+    for _, spellId in ipairs(self.bloodlust_debuffs) do
+        local auraData = C_UnitAuras.GetUnitAuraBySpellID("player", spellId)
+        if auraData then
+            return auraData.name or ("ID:" .. spellId), spellId
         end
-        -- 更新时间
     end
+    return nil, nil
 end
 
----# 监控嗜血buff
-function MzxToolFrame:GetBloodlust(updateInfo)
-    local foundBuff, buffName, spellIdFound = false, "", 0
-
-    C_Timer.After(0.5, function()
-        if updateInfo.addedAuras then
-            for _, bloodlustId in ipairs(bloodlust.bloodlust_debuffs) do
-                local aura = _G.C_UnitAuras.GetPlayerAuraBySpellID(bloodlustId)
-                if aura then
-                    foundBuff = true
-                    buffName = aura.name
-                    spellIdFound = bloodlustId
-                    break
-                end
-                print("嗜血", bloodlustId, foundBuff, bloodlust.hasBloodlust)
-            end
-        elseif updateInfo.removedAuraInstanceIDs then
-            for _, bloodlustId in ipairs(bloodlust.bloodlust_debuffs) do
-                local aura = _G.C_UnitAuras.GetPlayerAuraBySpellID(bloodlustId)
-                if aura then
-                    foundBuff = true
-                    buffName = aura.name
-                    spellIdFound = aura.spellId
-                    break
-                end
-            end
-        end
-
-        print("status", foundBuff, buffName, spellIdFound, bloodlust.hasBloodlust)
-        -- 处理buff状态变化
-        if foundBuff and not bloodlust.hasBloodlust then
-            self:OnBloodlustGained(buffName, spellIdFound, "wav")
-            bloodlust.hasBloodlust = true
-        elseif not foundBuff and bloodlust.hasBloodlust then
-            bloodlust.hasBloodlust = false
-        end
-    end)
-end
-
----# 监控嗜血buff
+---# 监控嗜血减益（去抖，避免 UNIT_AURA 高频触发时堆积定时器）
 function MzxToolFrame:CheckBloodlust()
-    local foundBuff, buffName, spellIdFound, hasteState = false, "", 0, 0
+    if bloodlust.pendingTimer then
+        return
+    end
+    bloodlust.pendingTimer = C_Timer.After(0.5, function()
+        bloodlust.pendingTimer = nil
 
-    -- local haste = GetHaste()
-    -- if haste - MzxToolCharacterDB.haste >= 30 then
-    --     hasteState = 1
-    -- elseif MzxToolCharacterDB.haste - haste >= 30 then
-    --     hasteState = -1
-    -- else
-    --     hasteState = 0
-    -- end
+        local buffName, spellId = bloodlust:FindAura()
+        local found = buffName ~= nil
 
-    C_Timer.After(0.5, function()
-        for _, bloodlustId in ipairs(bloodlust.bloodlust_debuffs) do
-            local auraData = C_UnitAuras.GetUnitAuraBySpellID("player", bloodlustId)
-            if auraData then
-                foundBuff = true
-                buffName = auraData.name
-                spellIdFound = auraData.spellId
-                break
-            end
+        -- 状态未变化则不做任何事
+        if found == bloodlust.lastState then
+            return
         end
+        bloodlust.lastState = found
 
-        -- 处理buff状态变化
-        if foundBuff and not bloodlust.hasBloodlust then
-            self:OnBloodlustGained(buffName, spellIdFound, "wav")
+        if found then
             bloodlust.hasBloodlust = true
-        elseif not foundBuff and bloodlust.hasBloodlust then
-            bloodlust.hasBloodlust = false
+            self:OnBloodlustGained(buffName, spellId, "wav")
         else
             bloodlust.hasBloodlust = false
         end
@@ -123,7 +72,7 @@ function MzxToolFrame:OnBloodlustGained(buffName, spellId, ogg)
     local currentTime = GetTime()
 
     -- 防止重复播放（40秒内）
-    if currentTime - bloodlust.lastPlayTime < 600 then
+    if currentTime - bloodlust.lastPlayTime < 40 then
         return
     end
 
@@ -139,16 +88,15 @@ function MzxToolFrame:OnBloodlustGained(buffName, spellId, ogg)
     self:ShowSimpleAlert(buffName)
 end
 
----# 播放外部语音文件
----@param ogg table
+---# 播放外部语音文件（文件缺失时回退到游戏内置音效）
+---@param ogg string "ogg" 或 "wav"
 function MzxToolFrame:PlayBloodlustVoice(ogg)
+    local path = (ogg == "ogg") and bloodlust.voice_file or bloodlust.yurin
+    local played = false
     if PlaySoundFile then
-        if ogg == "ogg" then
-            PlaySoundFile(bloodlust.voice_file, "Master")
-        else
-            PlaySoundFile(bloodlust.yurin, "Master")
-        end
-    else
+        played = pcall(PlaySoundFile, path, "Master")
+    end
+    if not played then
         -- 备选：使用游戏内置音效
         PlaySound(569200, "Master") -- 嗜血音效
     end
@@ -180,34 +128,30 @@ function MzxToolFrame:ShowSimpleAlert(buffName)
 end
 
 ---# 检测嗜血Buff
----* 任意职业测试时
----* 需有嗜血职业组队
 function MzxToolFrame:DebugBuffs()
     DEFAULT_CHAT_FRAME:AddMessage("|cFFFFFF00=== 嗜血Buff检测 ===|r")
     for bloodlustId, bloodlustName in pairs(bloodlust.bloodlust_spell_ids) do
         local auraData = C_UnitAuras.GetUnitAuraBySpellID("player", bloodlustId)
         if auraData then
-            DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00已激活|r" ..
-                bloodlustName:sub(1, 10) .. (auraData.name or "未知") .. " (ID: " .. (auraData.spellId or "?") .. ")|r")
+            DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00已激活|r " ..
+                bloodlustName .. " (ID: " .. bloodlustId .. ")|r")
         else
-            DEFAULT_CHAT_FRAME:AddMessage("|cFFFF0000未找到|r" .. bloodlustName)
+            DEFAULT_CHAT_FRAME:AddMessage("|cFFFF0000未找到|r " .. bloodlustName)
         end
     end
 
-    -- 显示当前嗜血状态
     DEFAULT_CHAT_FRAME:AddMessage("|cFFFFFF00当前嗜血状态: " ..
         (bloodlust.hasBloodlust and "|cFF00FF00已激活|r" or "|cFFFF0000未激活|r"))
 end
 
 ---# 检测萨满三种元素护盾
----* 使用萨满作为测试职业时
 function MzxToolFrame:DebugEleBuff()
     DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00护盾Buff检测|r")
     for spellId, spellName in pairs(bloodlust.d_spell_ids) do
         local auraData = C_UnitAuras.GetUnitAuraBySpellID("player", spellId)
         if auraData then
-            DEFAULT_CHAT_FRAME:AddMessage("|cFF888888" ..
-                (auraData.name or "未知") .. " (ID: " .. (auraData.spellId or "?") .. ")|r")
+            DEFAULT_CHAT_FRAME:AddMessage("|cFF888888" .. spellName .. " " ..
+                (auraData.name or "未知") .. " (ID: " .. spellId .. ")|r")
         else
             DEFAULT_CHAT_FRAME:AddMessage("|cFFFF0000未找到" .. spellName .. "护盾|r")
         end
@@ -215,7 +159,7 @@ function MzxToolFrame:DebugEleBuff()
 end
 
 ---# 嗜血测试
----@param ogg table
+---@param ogg string "ogg" 或 "wav"
 function MzxToolFrame:TestAlert(ogg)
     DEFAULT_CHAT_FRAME:AddMessage("|cFFFFFF00测试嗜血提示...|r")
     self:OnBloodlustGained("嗜血测试", 2825, ogg)

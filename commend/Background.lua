@@ -38,20 +38,28 @@ function WhiteTransparentDotGlow(dotGlow, infos)
 end
 
 -- 圆圈
+local DOT_TEX_CANDIDATES = {
+    "Interface\\Masks\\CircleMaskScalable",
+    "interface\\masks\\circlemaskscalable",
+    "Interface\\Masks\\RoundMaskScalable",
+    "Interface\\Tooltips\\UI-Tooltip-Background",
+}
+
 function WhiteTransparentDotTex(dotTex, infos)
     dotTex:SetSize(infos.dot_size, infos.dot_size)
     dotTex:SetPoint("CENTER")
-    -- dotTex:SetTexture(518448)
-    -- dotTex:SetTexture("interface/common/commonroundhighlight")
-    -- interface/masks/circlemaskscalable 实心圆1
-    -- interface/talentframe/talentsmasknodecircle 实心圆2
-    -- interface/common/commonmaskcircle 实心圆3
-    -- interface/common/commonroundhighlight 空心圆
-    -- dotTex:SetTexture("interface/masks/circlemaskscalable")
-    -- dotTex:SetTexCoord(0.5751953125, 0.818359375, 0.34912109375, 0.5927734375)
-    --
-    dotTex:SetTexture("interface/housing/exteriorcustomization")
-    dotTex:SetTexCoord(0.41015625, 0.80859375, 0.00390625, 0.40234375)
+
+    -- 逐个尝试候选圆圈贴图，全部失效时回退到白色方块（SetColorTexture 无需外部资源）
+    for _, path in ipairs(DOT_TEX_CANDIDATES) do
+        dotTex:SetTexture(path)
+        if dotTex:GetTexture() then
+            break
+        end
+    end
+    if not dotTex:GetTexture() then
+        dotTex:SetColorTexture(1, 1, 1, 1)
+    end
+
     -- 初始状态
     dotTex:SetGradient("VERTICAL",
         CreateColor(0.5, 0.5, 0.5, 1),
@@ -128,7 +136,7 @@ end
 function AddButton(button_frame, spell, width, height, point, x, y)
     button_frame:SetSize(width, height)
     button_frame:SetPoint(point, x, y)
-    button_frame:SetAttribute("type", "spell")
+    button_frame:SetAttribute("type1", "spell")
     button_frame:SetAttribute("spell", spell) -- 设置要施放的技能名
     button_frame:RegisterForClicks("AnyUp", "AnyDown")
 end
@@ -154,7 +162,7 @@ function MinutesOrSeconds(seconds)
 end
 
 function MzxDebug(...)
-    if MzxToolCharacterDB.status.Debug then
+    if MzxToolCharacterDB and MzxToolCharacterDB.status and MzxToolCharacterDB.status.Debug then
         print(...)
     end
 end

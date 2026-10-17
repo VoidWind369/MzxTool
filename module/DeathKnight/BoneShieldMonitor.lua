@@ -1,27 +1,40 @@
 local boneShield = {
     BloodDeathKnight_SpecId = 250,
 
-    -- 骨盾法术ID
+    -- 骨盾光环法术ID
     spell_id = 433925,
-    ruin_spell_id = 441416,
+    -- 英雄天赋： exterminate（霜死骑「 exterminate」），存在时框体变蓝
+    heroTalent_spell_id = 441416,
 
     -- 显示设置
     max_stacks = 12,
     dot_size = 20,   -- 每个小圆点的大小
     dot_spacing = 1, -- 圆点间距
-    position_x = 0,
-    position_y = -260,
+
+    up = {
+        p = "CENTER",
+        x = 0,
+        y = -260
+    },
 
     currentStacks = 0,
-    lastStacks = 0,
 }
 
 function MzxToolFrame:CreateBoneShieldDotProgress()
+    MzxToolCharacterDB.point.boneShield = MzxToolCharacterDB.point.boneShield or {
+        p = boneShield.up.p,
+        x = boneShield.up.x,
+        y = boneShield.up.y
+    }
+
     -- 主框架
-    self.dotFrameDeathKnight = CreateFrame("Frame", "BoneShield", UIParent, "BackdropTemplate")
+    self.dotFrameDeathKnight = CreateFrame("Frame", "MzxBoneShieldFrame", UIParent, "BackdropTemplate")
+    self.dotFrameDeathKnight:SetPoint(MzxToolCharacterDB.point.boneShield.p,
+        MzxToolCharacterDB.point.boneShield.x,
+        MzxToolCharacterDB.point.boneShield.y)
     WhiteTransparentFrame(self.dotFrameDeathKnight, boneShield)
 
-    -- 创建10个小圆点
+    -- 创建 max_stacks 个小圆点
     self.boneShieldDots = {}
 
     for i = 1, boneShield.max_stacks do
@@ -41,10 +54,16 @@ function MzxToolFrame:CreateBoneShieldDotProgress()
     if GetSpecializationInfo(GetSpecialization()) ~= boneShield.BloodDeathKnight_SpecId then
         self.dotFrameDeathKnight:Hide()
     end
+
+    MovableDisplay(self.dotFrameDeathKnight)
+    MovableFrameStop(self.dotFrameDeathKnight, MzxToolCharacterDB.point.boneShield, boneShield.up)
+
+    -- 初始刷新一次
+    self:UpdateDeathKnightBuff()
 end
 
-function MzxToolFrame:UpdateDeathKnightDotFrameProgress(hasGaleWindsData)
-    if hasGaleWindsData then
+function MzxToolFrame:UpdateDeathKnightDotFrameProgress(hasHeroTalentData)
+    if hasHeroTalentData then
         self.dotFrameDeathKnight:SetBackdropColor(0, 0.4, 1, 0.55)
         self.dotFrameDeathKnight:SetBackdropBorderColor(0, 0.1, 0.4, 0.8)
     else
@@ -98,10 +117,13 @@ function MzxToolFrame:GetDeathKnightGradientColors(dotIndex, alpha)
 end
 
 function MzxToolFrame:UpdateDeathKnightBuff()
-    local boneShieldData = C_UnitAuras.GetAuraDataBySlot("player", boneShield.spell_id)
-    local ruinData = C_UnitAuras.GetUnitAuraBySpellID("player", boneShield.ruin_spell_id)
+    if not self.dotFrameDeathKnight then
+        return
+    end
 
-    -- print("骨盾" .. (boneShieldData.applications or 0) .. ", " .. ruinData.applications)
+    -- GetAuraDataBySlot 的第二参数是光环槽位号，必须按 spellID 查询
+    local boneShieldData = C_UnitAuras.GetUnitAuraBySpellID("player", boneShield.spell_id)
+    local heroTalentData = C_UnitAuras.GetUnitAuraBySpellID("player", boneShield.heroTalent_spell_id)
 
     if GetSpecializationInfo(GetSpecialization()) == boneShield.BloodDeathKnight_SpecId then
         self.dotFrameDeathKnight:Show()
@@ -109,18 +131,9 @@ function MzxToolFrame:UpdateDeathKnightBuff()
         self.dotFrameDeathKnight:Hide()
     end
 
-    if boneShieldData then
-        boneShield.currentStacks = boneShieldData.applications or 0
-    else
-        boneShield.currentStacks = 0
-        boneShield.lastStacks = 0
-    end
+    boneShield.currentStacks = (boneShieldData and boneShieldData.applications) or 0
 
     -- 更新小圆点进度
     self:UpdateDeathKnightDotProgress(boneShield.currentStacks)
-    if ruinData then
-        self:UpdateDeathKnightDotFrameProgress(true)
-    else
-        self:UpdateDeathKnightDotFrameProgress(false)
-    end
+    self:UpdateDeathKnightDotFrameProgress(heroTalentData ~= nil)
 end

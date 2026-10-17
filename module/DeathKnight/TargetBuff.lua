@@ -1,13 +1,27 @@
+-- 调试用：查看目标身上的毒镰层数
+-- 用法：/run GetTargetBuff()
+local FESTERING_WOUND_SPELL_ID = 194310 -- 毒镰切口（Festering Wound）
+
 function GetTargetBuff()
-    local festering_aura = C_UnitAuras.GetUnitAuraBySpellID("target", 1241077)
-    if festering_aura then
-        print("毒镰", festering_aura.expirationTime)
+    if not UnitExists("target") then
+        print("|cFFFF0000没有目标|r")
+        return
+    end
+    local aura = C_UnitAuras.GetUnitAuraBySpellID("target", FESTERING_WOUND_SPELL_ID)
+    if aura then
+        local remain = aura.expirationTime and (aura.expirationTime - GetTime()) or 0
+        print(string.format("|cFFFF0000毒镰|r 层数:%d  剩余:%.1fs", aura.applications or 0, math.max(remain, 0)))
     else
-        print("补毒镰")
+        print("|cFF00FF00目标身上没有毒镰|r")
     end
 end
 
-function PrintSpell()
-    local spellInfo = C_Spell.GetSpellInfo(12410977)
-    print(spellInfo.name)
+-- 调试用：按法术ID打印法术名
+function PrintSpell(spellId)
+    local info = C_Spell.GetSpellInfo(spellId or FESTERING_WOUND_SPELL_ID)
+    if info then
+        print(string.format("[%s] %s", info.id, info.name))
+    else
+        print(string.format("|cFFFF0000法术ID %s 无效|r", tostring(spellId or FESTERING_WOUND_SPELL_ID)))
+    end
 end
